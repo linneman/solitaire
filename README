@@ -1,0 +1,13 @@
+# solitaer
+
+Solver for the Game of Solitaer
+
+## Usage
+
+lein run (under development)
+
+## License
+
+Copyright (C) 2011 Otto Linnemann
+
+GNU General Public Licence
