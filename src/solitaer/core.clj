@@ -2,7 +2,8 @@
 ; (C) 2011 GNU General Public Licence
 ; Otto Linnemann
 
-(ns solitaer.core)
+(ns solitaer.core
+  (:require [clojure.contrib.math :as math]))
 
 
 (defn init-field []
@@ -106,4 +107,16 @@
 
 
 
+(defn eval-constellation-by-center-distance [field]
+  "evaluates the winning changec of a given constellation by calculating
+  the distance of each gaming piece to the center field"
+  (let [distance-index-center
+        (fn [index]
+          (let [[x y] (index2xy index)]
+            (+ (Math/abs (- x 3)) (Math/abs (- y 3)))))
+        tile-index-pairs (partition 2 (interleave field (range 49)))
+        occupied-tile_index-pairs (filter #(= :1 (first %)) tile-index-pairs)]
+    (reduce + (mapcat #(rest %) occupied-tile_index-pairs))
+    ))
 
+;(eval-constellation step4)
