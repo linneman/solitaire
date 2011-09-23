@@ -12,12 +12,6 @@
            35 :x 36 :x 40 :x 41 :x 42 :x 43 :x 47 :x 48 :x
            24 :0)))
 
-(defn init-test []
-  (let [field (vec (repeat 49 :1))]
-    (assoc field 0 :x 1 :x 5 :x 6 :x 7 :x 8 :x 12 :x 13 :x
-           35 :x 36 :x 40 :x 41 :x 42 :x 43 :x 47 :x 48 :x
-           24 :x)))
-
 (defn toString [field]
   (let [convf (fn [a] (map #(case % :0 "0" :1 "X" :n "\n" " ") (cons :n a)))]
     (reduce str (flatten (map convf (partition 7 field))))))
@@ -95,7 +89,6 @@
 ;(next-moves move-to-north step4)
 
 ;(all-next-moves step4)
-;(all-next-moves (init-test))
 ;
 ;
 ;
@@ -117,13 +110,12 @@
 (defn constellations-for-all-moves [const]
   (mapcat #(constellations-for-move % const) [move-to-north move-to-south move-to-east move-to-west]))
 
-(def init-const (initial-constellation (init-field)))
-(def const2 (constellations-for-all-moves init-const))
-(def const3 (mapcat #(constellations-for-all-moves (:field %)) const2))
+(def init-const (vector (initial-constellation (init-field))))
+(def const2 (mapcat #(constellations-for-all-moves %) init-const))
 (def const3 (mapcat #(constellations-for-all-moves %) const2))
 
 
-(defn eval-constellation-by-center-distance
+(defn eval-field-by-center-distance
   "evaluates the winning changec of a given constellation by calculating
   the distance of each gaming piece to the center field"
   [field]
@@ -131,59 +123,103 @@
         (fn [index]
           (let [[x y] (index2xy index)]
             (+ (Math/abs (- x 3)) (Math/abs (- y 3)))))
-        tile-index-pairs (partition 2 (interleave field (range 49)))
+        field-factors (map #(distance-index-center %) (range 49))
+        tile-index-pairs (partition 2 (interleave field field-factors))
         occupied-tile_index-pairs (filter #(= :1 (first %)) tile-index-pairs)]
     (reduce + (mapcat #(rest %) occupied-tile_index-pairs))
     ))
 
 
-(def initial (init-field))
-(def iter0 (all-next-moves initial))
-(def iter1 (mapcat #(all-next-moves (:next-field %)) iter0))
-(def iter2 (mapcat #(all-next-moves (:next-field %)) iter1))
-(def iter3 (mapcat #(all-next-moves (:next-field %)) iter2))
-(def iter4 (mapcat #(all-next-moves (:next-field %)) iter3))
+(defn weighting-field-factors []
+  (let [movs_4 1 
+        movs_2 2
+        movs_1 4
+        field (vec (repeat 49 movs_4))]
+    (assoc field
+           2 movs_2 3 movs_1 4 movs_2
+           9 movs_2 10 movs_1 11 movs_2
+
+           14 movs_2 15 movs_2
+           21 movs_1 22 movs_1
+           28 movs_2 29 movs_2
+
+           19 movs_2 20 movs_2
+           26 movs_1 27 movs_1
+           33 movs_2 34 movs_2
+
+           37 movs_2 38 movs_1 39 movs_2
+           44 movs_2 45 movs_1 46 movs_2
+           )))
 
 
+(defn eval-field-by-movability
+  "evaluates the winning changec of a given constellation by determinng
+  the amount of maximum possible moves for each piece"
+  [field]
+  (let [tile-index-pairs (partition 2 (interleave field (weighting-field-factors)))
+        occupied-tile_index-pairs (filter #(= :1 (first %)) tile-index-pairs)]
+    (reduce + (mapcat #(rest %) occupied-tile_index-pairs))
+    ))
 
 (defn all-next-iterations
   "evaluates n iterations of all possible moves
   for a given iteration"
   [iteration n]
-  (if (pos? n)
-    (recur (mapcat #(all-next-moves (:next-field %)) iteration) (dec n))
-    iteration))
+  (let [next-iteration (apply concat (map #(constellations-for-all-moves %) iteration))]
+    (if (and (pos? n) (seq next-iteration))
+      (recur next-iteration (dec n))
+      [iteration n])))
 
+; (def a (def next-n-iter (all-next-iterations init-const 4)))
+; (eval-field-by-center-distance step4)
+; (eval-field-by-movability step4)
 
-
-;(eval-constellation-by-center-distance step4)
-
-;(def iter4-eval (map #(assoc % :evalres (eval-constellation-by-center-distance (:next-field %))) iter4))
-;(sort-by #(:evalres %) iter4-eval)
-
-(defn sort-by-weighting [iteration]
-  (let [iter-plus-evalres (map #(assoc % :evalres (eval-constellation-by-center-distance (:next-field %))) iteration)]
+(defn sort-constellation-by-weighting [iteration]
+  (let [iter-plus-evalres (map #(assoc % :evalres (eval-field-by-center-distance (:field %))) iteration)]
     (sort-by #(:evalres %) iter-plus-evalres)))
 
+;(sort-constellation-by-weighting const2)
 
-
-(defn search []
-  (let [start (all-next-moves (init-field))
-        iterations-before-pruning 4]
+(defn search [iterations-before-pruning prune-factor]
+  (let [start (vector (initial-constellation (init-field)))]
     (loop [iter start, move-no 1]
-      (let [next-n-iter (all-next-iterations iter iterations-before-pruning)
-            next-n-iter-pruned (take 10 (sort-by-weighting next-n-iter))]
+      (let [[next-n-iter n] (all-next-iterations iter iterations-before-pruning)
+            next-n-iter-pruned (take prune-factor (sort-constellation-by-weighting next-n-iter))]
         (do
           (println (format "analyzed up to move number %d" move-no))
-          (if (empty? next-n-iter-pruned)
-          iter
-          (recur next-n-iter-pruned (+ move-no iterations-before-pruning))))))))
+          (if (pos? n)
+          next-n-iter
+          (recur next-n-iter-pruned (+ move-no (- iterations-before-pruning n)))))))))
 
 
 
+(time (def res (search 3 10))) ; (distance-function, 64s, 1 pieces left but none in the center)
+;(time (def res (search 3 15))) ; (distance-function, 99s, 1 pieces left but none in the center)
+;(time (def res (search 3 20))) ; (distance-function, 145s, 1 pieces left but none in the center)
+;(time (def res (search 3 25))) ; (distance-function, 171s, 1 pieces left but none in the center)
+;(time (def res (search 3 30))) ; (distance-function, 211s, 1 pieces left but none in the center)
+
+;(time (def res (search 4 5))) ; (distance-function, 50 min, 3 pieces left)
 
 
-;(all-next-iterations iter0 4))
+;(time (def res (search 3 10))) ; (movability-function, 6s, 4 pieces left)
+;(time (def res (search 4 10))) ; (movability-function, 23s, 4 pieces left)
+;(time (def res (search 5 10))) ; (takes forever)
+
+;(time (def res (search 4 15))) ; (movability-function, 30s, 4 pieces left)
+;(time (def res (search 4 17))) ; (movability-function, 61s, 4 pieces left)
+;(time (def res (search 4 20))) ; (movability-function, mover than 20 minutes up to iteration 13)
+
+
+(map (fn [constellation] 
+       (let [field (:field constellation)]
+         (count (filter #(= :1 %) field)))) res)
+
+(map (fn [constellation]
+       (println (toString (:field constellation)))) res)
+
+
+;(all-next-iterations const2 4)
 
 
 (defn test-field []
@@ -192,6 +228,4 @@
            35 :x 36 :x 40 :x 41 :x 42 :x 43 :x 47 :x 48 :x
            24 :1 23 :1)))
 
-(def t_iter0 (all-next-moves (test-field)))
-(all-next-iterations t_iter0 4)
 
