@@ -1,5 +1,5 @@
 (ns solitaer.test.core
-  (:use [solitaer.core])
+  (:use [solitaire.core])
   (:use [clojure.test]))
 
 (deftest replace-me ;; FIXME: write
