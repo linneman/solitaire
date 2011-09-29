@@ -6,16 +6,15 @@
 ; (C) 2011, GNU General Public Licence
 
 (ns solitaire.main
-  (:gen-class)
   (:use [solitaire.core :only (search print-results)] :reload)
   )
 
 
 ; command line interface (leiningen)
 (defn -main [& args]
-  (let [iterations-str (if (> (count args) 0) (nth args 0) "3")
+  (let [iterations-str (if (> (count args) 0) (first args) "3")
         iterations (if iterations-str (read-string iterations-str) 3)
-        pruning-str  (if (> (count args) 1) (nth args 1) "10")
+        pruning-str  (if (> (count args) 1) (second args) "10")
         pruning (if pruning-str (read-string pruning-str) 10)]
     (do
       (println 
@@ -31,3 +30,4 @@
       (dorun (print-results res))
       )))
 
+(set! *main-cli-fn* main)

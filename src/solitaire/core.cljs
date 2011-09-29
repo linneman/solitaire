@@ -4,9 +4,11 @@
 ; Otto Linnemann
 
 (ns solitaire.core
-  (:require [clojure.contrib.math :as math]))
+  #_(:require [clojure.contrib.math :as math]))
 
 
+(defn abs [n]
+  (if (> n 0) n -n))
 
 ; ----- board definition and basic moves -----
 
