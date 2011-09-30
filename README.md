@@ -1,5 +1,30 @@
 # Solver for the Game of Solitaire in Clojure
 
+## MODIFIED: This is the ClojureSript version
+This is a slightly modified version of Otto Linnemanns orginal Peg solitaire
+implementation in pure Clojure. I made minimal changes to make it
+compileable as _ClojureScript_. The resulting JavaScript file `solitaire.js`
+is runnable under [node](http://nodejs.org). Don't expect the same
+runtime performance as the original version though. /jramb
+
+Compile it using
+
+    cljsc src '{:optimizations :simple :pretty-print true :target :nodejs :output-to "solitaire.js"}'
+
+The output `solitaire.js` has been included in the repository. Currently ClojureScript+node
+does not seem to work correctly with advanced optimizations. I noticed that command line parameters
+do not work in advanced mode. Unsure about other functionality.
+
+After compiling you can run it using
+
+    node solitaire.js
+
+Have fun!
+
+*The rest of this readme still applies to the original version.*
+
+## Introduction
+
 > "Peg solitaire is  a board game for one player  involving movement of pegs
 on a board with holes. Some sets  use marbles in a board with indentations.
 The game is known simply as Solitaire  in the United Kingdom where the card

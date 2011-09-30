@@ -4,30 +4,28 @@
 ;
 ; by Otto Linnemann
 ; (C) 2011, GNU General Public Licence
+; Minor changes to allow compilation as ClojureScript by Jörg Ramb
 
 (ns solitaire.main
-  (:use [solitaire.core :only (search print-results)] :reload)
+  (:require [solitaire.core :as sc])
   )
 
+(def str2int js/parseInt) ; added for ClojureScript
 
 ; command line interface (leiningen)
 (defn -main [& args]
   (let [iterations-str (if (> (count args) 0) (first args) "3")
-        iterations (if iterations-str (read-string iterations-str) 3)
+        iterations (if iterations-str (str2int iterations-str) 3)
         pruning-str  (if (> (count args) 1) (second args) "10")
-        pruning (if pruning-str (read-string pruning-str) 10)]
-    (do
-      (println 
-        "Solver for the Game of Solitaire\n
-        invocation:  java -jar solitaire-standalone.jar [iterations-before-pruning] [prune-factor]\n
-        (C) 2011, GNU General Public Licence by Otto Linnemann\n\n")
-      (println
-        (format "Starting application with %d iterations before pruning to %d constellations..."
-                iterations
-                pruning
-                ))
-      (time (def res (search iterations pruning)))
-      (dorun (print-results res))
-      )))
+        pruning (if pruning-str (str2int pruning-str) 10)
+        ]
+    (println
+      "Solver for the Game of Solitaire (ClojureScript version)\n
+      invocation:  node solitaire.js [iterations-before-pruning] [prune-factor]\n
+      (C) 2011, GNU General Public Licence by Otto Linnemann\n\n")
+    (println "Starting application with" iterations "iterations before pruning to" pruning "constellations...")
+    (let [res (time (def res (sc/search iterations pruning)))]
+      (dorun (sc/print-results res)))
+    ))
 
-(set! *main-cli-fn* main)
+(set! *main-cli-fn* -main)

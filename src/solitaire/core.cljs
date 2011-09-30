@@ -2,13 +2,22 @@
 ;
 ; (C) 2011 GNU General Public Licence
 ; Otto Linnemann
+; Some small changes to allow compilation as ClojureScript by Jörg Ramb
 
 (ns solitaire.core
-  #_(:require [clojure.contrib.math :as math]))
+  )
 
-
+; ClojureScript helpers {{{
 (defn abs [n]
   (if (> n 0) n -n))
+
+(defn key [x]
+  (let [[k v] x] k))
+
+(defn val [x]
+  (let [[k v] x] v))
+
+; ClojureScript helpers }}}
 
 ; ----- board definition and basic moves -----
 
@@ -18,8 +27,17 @@
            35 :x 36 :x 40 :x 41 :x 42 :x 43 :x 47 :x 48 :x
            24 :0)))
 
+(defn peg-to-str [p]
+  (cond
+    (= p :0) "0"
+    (= p :1) "1"
+    (= p :n) "\n"
+    :else " "))
+
 (defn toString [field]
-  (let [convf (fn [a] (map #(case % :0 "0" :1 "X" :n "\n" " ") (cons :n a)))]
+  (let [convf (fn [a] (map
+      peg-to-str ;case not in CJS yet, sorry; #(case % :0 "0" :1 "X" :n "\n" " ")
+      (cons :n a)))]
     (reduce str (flatten (map convf (partition 7 field))))))
 
 (defn index2xy [index]
@@ -283,7 +301,7 @@
       (let [[next-n-iter n] (all-next-iterations iter iterations-before-pruning)
             next-n-iter-pruned (prune-constellations next-n-iter prune-factor)]
         (do
-          (println (format "analyzed up to move number %d" move-no))
+          (println "analyzed up to move number" move-no)
           (if (pos? n)
           next-n-iter
           (recur next-n-iter-pruned (+ move-no (- iterations-before-pruning n)))))))))
