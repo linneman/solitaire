@@ -1,6 +1,6 @@
 # Solver for the Game of Solitaire in Clojure
 
-## MODIFIED: This is the ClojureSript version
+## MODIFIED: This is the ClojureScript version
 This is a slightly modified version of Otto Linnemanns orginal Peg solitaire
 implementation in pure Clojure. I made minimal changes to make it
 compileable as _ClojureScript_. The resulting JavaScript file `solitaire.js`
