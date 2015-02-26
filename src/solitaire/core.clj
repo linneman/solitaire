@@ -4,7 +4,7 @@
 ; Otto Linnemann
 
 (ns solitaire.core
-  (:require [clojure.contrib.math :as math]))
+  (:require [clojure.math.numeric-tower :as math]))
 
 
 
@@ -47,7 +47,7 @@
   move-to-east
   "moves piece at position index to the east"
   [field index]
-  (let [[x y] (index2xy index) 
+  (let [[x y] (index2xy index)
         dest-x (+ x 2)
         dest-index (+ index 2)
         leapt-index (+ index 1)]
@@ -59,7 +59,7 @@
   move-to-west
   "moves piece at position index to the west"
   [field index]
-  (let [[x y] (index2xy index) 
+  (let [[x y] (index2xy index)
         dest-x (- x 2)
         dest-index (- index 2)
         leapt-index (- index 1)]
@@ -73,7 +73,7 @@
 ; (def step2 (move-to-south step1 17))
 ; (def step3 (move-to-east step2 22))
 ; (def step4 (move-to-west step3 25))
-; 
+;
 ; (println (toString initial))
 ; (println (toString step1))
 ; (println (toString step2))
@@ -154,19 +154,19 @@
   [constellations]
   ; {:pre [(isa? (class constellations) clojure.lang.APersistentMap)]}
   (reduce merge (map
-                  (fn [dir] 
+                  (fn [dir]
                     (map-and-merge-on-map-entries
-                      (partial constellations-for-move dir) constellations))  
-                  [move-to-north move-to-south move-to-east move-to-west]         
+                      (partial constellations-for-move dir) constellations))
+                  [move-to-north move-to-south move-to-east move-to-west]
                   )))
 
 ; usage illustration
 ; (def init-const (initial-constellation (init-field)))
 ; (prn init-const)
-; 
+;
 ; (def const2 (constellations-for-all-moves init-const))
 ; (prn const2)
-; 
+;
 ; (def const3 (constellations-for-all-moves const2))
 ; (prn const3)
 
@@ -189,7 +189,7 @@
 
 
 (defn weighting-field-factors []
-  (let [movs_4 1 
+  (let [movs_4 1
         movs_2 2
         movs_1 4
         field (vec (repeat 49 movs_4))]
@@ -251,7 +251,7 @@
 (defn prune-constellations
   "reduces number of constellations selecting only
   the amount given in prune-factor with the lowest
-  score value." 
+  score value."
   [constellations prune-factor]
   (let [iter-plus-evalres
         (map-function-on-map-vals constellations
@@ -290,7 +290,7 @@
 ; (distance-function, 24s, 4 constellation with 1 pieces left found, one is solution )
 ; (time (def res (search 3 10)))
 ; (distance-function, 48s, 6 constellation with 1 pieces left found, one is solution )
-; (time (def res (search 3 20))) 
+; (time (def res (search 3 20)))
 
 
 
@@ -328,7 +328,7 @@
             ))
         native-coord
         (map  #(list (:from %) (+ (:from %) (dirfcnt2index (:dir %)))) moves)
-        std-coord-ind [:x :x  1  2  3 :x :x 
+        std-coord-ind [:x :x  1  2  3 :x :x
                        :x :x  4  5  6 :x :x
                        7  8  9 10 11 12 13
                        14 15 16 17 18 19 20
@@ -345,7 +345,7 @@
 (defn print-results
   "displays the move list and the final board for each constellation"
   [constellations]
-  (map 
+  (map
     #(println
       (move-list-to-string (:move (val %))) "\n"
       (toString (key %)) "\n\n-------\n")
@@ -356,4 +356,3 @@
 
 ;(time (def res (search 3 10)))
 ;(print-results res)
- 

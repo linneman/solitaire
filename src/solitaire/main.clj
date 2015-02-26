@@ -7,6 +7,8 @@
 
 (ns solitaire.main
   (:gen-class)
+  (:require [cider.nrepl :refer (cider-nrepl-handler)]
+            [clojure.tools.nrepl.server :as nrepl-server])
   (:use [solitaire.core :only (search print-results)] :reload)
   )
 
@@ -18,7 +20,8 @@
         pruning-str  (if (> (count args) 1) (nth args 1) "10")
         pruning (if pruning-str (read-string pruning-str) 10)]
     (do
-      (println 
+      (nrepl-server/start-server :port 7888 :handler cider-nrepl-handler)
+      (println
         "Solver for the Game of Solitaire\n
         invocation:  java -jar solitaire-standalone.jar [iterations-before-pruning] [prune-factor]\n
         (C) 2011, GNU General Public Licence by Otto Linnemann\n\n")
@@ -30,4 +33,3 @@
       (time (def res (search iterations pruning)))
       (dorun (print-results res))
       )))
-
