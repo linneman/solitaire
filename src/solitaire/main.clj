@@ -20,7 +20,7 @@
         pruning-str  (if (> (count args) 1) (nth args 1) "10")
         pruning (if pruning-str (read-string pruning-str) 10)]
     (do
-      (nrepl-server/start-server :port 7888 :handler cider-nrepl-handler)
+      ;(nrepl-server/start-server :port 7888 :handler cider-nrepl-handler)
       (println
         "Solver for the Game of Solitaire\n
         invocation:  java -jar solitaire-standalone.jar [iterations-before-pruning] [prune-factor]\n
@@ -30,6 +30,6 @@
                 iterations
                 pruning
                 ))
-      (time (def res (search iterations pruning)))
-      (dorun (print-results res))
-      )))
+      (let [res (time (doall (search iterations pruning)))]
+        (dorun (print-results res))
+        (System/exit 0)))))

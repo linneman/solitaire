@@ -4,4 +4,5 @@
                            [org.clojure/math.numeric-tower "0.0.4"]
                            [org.clojure/tools.nrepl "0.2.7"]]
             :plugins [[cider/cider-nrepl "0.9.0-SNAPSHOT"]]
-            :main solitaire.main)
+            :main solitaire.main
+            :aot [solitaire.main])
