@@ -4,8 +4,7 @@
 ; Otto Linnemann
 
 (ns solitaire.core
-  (:require [clojure.math.numeric-tower :as math]))
-
+  (use [solitaire.utils]))
 
 
 ; ----- board definition and basic moves -----
@@ -29,7 +28,8 @@
   [field index]
   (let [dest-index (- index 14)
         leapt-index (- index 7)]
-    (if (and (>= dest-index 0) (= (field index) :1) (= (field leapt-index) :1) (= (field dest-index) :0))
+    (if (and (>= dest-index 0)
+             (= (get field index) :1) (= (get field leapt-index) :1) (= (get field dest-index) :0))
       (assoc field dest-index :1 index :0 leapt-index :0)
       field)))
 
@@ -39,7 +39,8 @@
   [field index]
   (let [dest-index (+ index 14)
         leapt-index (+ index 7)]
-    (if (and (< dest-index 49) (= (field index) :1) (= (field leapt-index) :1) (= (field dest-index) :0))
+    (if (and (< dest-index 49)
+             (= (get field index) :1) (= (get field leapt-index) :1) (= (get field dest-index) :0))
       (assoc field dest-index :1 index :0 leapt-index :0)
       field)))
 
@@ -51,7 +52,8 @@
         dest-x (+ x 2)
         dest-index (+ index 2)
         leapt-index (+ index 1)]
-    (if (and (< dest-x 7) (= (field index) :1) (= (field leapt-index) :1) (= (field dest-index) :0))
+    (if (and (< dest-x 7)
+             (= (get field index) :1) (= (get field leapt-index) :1) (= (get field dest-index) :0))
       (assoc field dest-index :1 index :0 leapt-index :0)
       field)))
 
@@ -63,12 +65,13 @@
         dest-x (- x 2)
         dest-index (- index 2)
         leapt-index (- index 1)]
-    (if (and (>= dest-x 0) (= (field index) :1) (= (field leapt-index) :1) (= (field dest-index) :0))
+    (if (and (>= dest-x 0)
+             (= (get field index) :1) (= (get field leapt-index) :1) (= (get field dest-index) :0))
       (assoc field dest-index :1 index :0 leapt-index :0)
       field)))
 
 ; usage illustration for field setup
- (def initial (init-field))
+; (def initial (init-field))
 ; (def step1 (move-to-north initial 38))
 ; (def step2 (move-to-south step1 17))
 ; (def step3 (move-to-east step2 22))
@@ -128,7 +131,6 @@
                   ))) (range 49))))
 
 
-
 (defn map-and-merge-on-map-entries
   "Iterates each key in the hash map m and evaluates
   function f for it which is required to deliver one
@@ -153,34 +155,32 @@
   configurations from the given configuration"
   [constellations]
   ; {:pre [(isa? (class constellations) clojure.lang.APersistentMap)]}
-  (reduce merge (map
-                  (fn [dir]
-                    (map-and-merge-on-map-entries
-                      (partial constellations-for-move dir) constellations))
-                  [move-to-north move-to-south move-to-east move-to-west]
-                  )))
+  (reduce merge {}
+          (map
+           (fn [dir]
+             (map-and-merge-on-map-entries
+              (partial constellations-for-move dir) constellations))
+           [move-to-north move-to-south move-to-east move-to-west])))
+
+
+; (constellations-for-all-moves (initial-constellation (init-field)))
+
 
 ; usage illustration
 ; (def init-const (initial-constellation (init-field)))
 ; (prn init-const)
-;
-; (def const2 (constellations-for-all-moves init-const))
-; (prn const2)
-;
-; (def const3 (constellations-for-all-moves const2))
-; (prn const3)
 
 
 ; ----- score functions for pruning the search tree -----
 
 (defn eval-field-by-center-distance
-  "evaluates the winning changec of a given constellation by calculating
+  "evaluates the winning chance of a given constellation by calculating
   the distance of each gaming piece to the center field"
   [field]
   (let [distance-index-center
         (fn [index]
           (let [[x y] (index2xy index)]
-            (+ (Math/abs (- x 3)) (Math/abs (- y 3)))))
+            (+ (abs (- x 3)) (abs (- y 3)))))
         field-factors (map #(distance-index-center %) (range 49))
         tile-index-pairs (partition 2 (interleave field field-factors))
         occupied-tile_index-pairs (filter #(= :1 (first %)) tile-index-pairs)]
@@ -240,6 +240,38 @@
 ; (eval-field-by-movability step4)
 
 
+
+(defn- sort-parts
+  "Lazy, tail-recursive, incremental quicksort.  Works against
+   and creates partitions based on the pivot, defined as 'work'."
+  [p work]
+  (lazy-seq
+   (loop [[part & parts] work]
+     (if-let [[pivot & xs] (seq part)]
+       (let [smaller? #(p % pivot)]
+         (recur (conj parts
+                 (filter smaller? xs)
+                 pivot
+                 (remove smaller? xs))))
+       (when-let [[x & parts] parts]
+         (cons x (sort-parts p parts)))))))
+
+(defn qsort
+  "sorts sequence xs with predicate p
+   taken from Joy of Clojure, Chapter 6.4"
+  [p xs]
+  (sort-parts p (list xs)))
+
+
+(comment
+  (qsort < [1 99 -2 17])
+  (qsort > [1 99 -2 17])
+  (qsort > '(1 99 -2 17))
+
+  (qsort #(< (first %1) (first %2)) [[15 :a] [2 :b] [99 :c]])
+  )
+
+
 (defn map-function-on-map-vals
   "utility function for altering a hash-map with
   a function which takes the key value pair for
@@ -256,9 +288,8 @@
   (let [iter-plus-evalres
         (map-function-on-map-vals constellations
                                   (fn [k v] (assoc v :evalres (eval-field-by-center-distance k))))
-        sorted-score-field-pairs
-        (sort-by first (map #(vector (:evalres (val %)) (key %))
-                      iter-plus-evalres))
+        score-field-pairs (map #(vector (:evalres (val %)) (key %)) iter-plus-evalres)
+        sorted-score-field-pairs (qsort #(> (first %1) (first %2)) score-field-pairs)
         sorted-hashes (map #(second %) sorted-score-field-pairs)
         pruned-hashes (take prune-factor sorted-hashes)]
     (select-keys iter-plus-evalres pruned-hashes)))
@@ -281,7 +312,7 @@
       (let [[next-n-iter n] (all-next-iterations iter iterations-before-pruning)
             next-n-iter-pruned (prune-constellations next-n-iter prune-factor)]
         (do
-          (println (format "analyzed up to move number %d" move-no))
+          (println "analyzed up to move number " move-no)
           (if (pos? n)
           next-n-iter
           (recur next-n-iter-pruned (+ move-no (- iterations-before-pruning n)))))))))
@@ -335,12 +366,13 @@
                        21 22 23 24 25 26 27
                        :x :x 28 29 30 :x :x
                        :x :x 31 32 33 :x :x]
-        n2s (fn [native] (std-coord-ind native))
+        n2s (fn [native] (get std-coord-ind native))
         std-corrd (map
                     #(list (n2s (:from %))
                            (n2s (+ (:from %) (dirfcnt2index (:dir %)))))
                     moves)]
     std-corrd))
+
 
 (defn print-results
   "displays the move list and the final board for each constellation"
@@ -354,5 +386,8 @@
 
 ; ----- sample invocation for starting solver and printing results -----
 
-;(time (def res (search 3 10)))
-;(print-results res)
+(comment
+  (def res (search 3 10))
+  (print-results res)
+
+  )

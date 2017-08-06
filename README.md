@@ -40,12 +40,18 @@ Refer also to [Zef's Leiningen page](http://zef.me/2470/building-clojure-project
 ### Invocation
 The following  command will start the simulation
 
-    $ java -jar solitaire-standalone.jar 
+    $ java -jar solitaire-standalone.jar
 
-Two  optional parameters  allow to  change the  complexity of  the solution
-space. The first  determines the number of iterations  before pruning takes
-place. The second  one determines the number of constellations  to be taken
-into account for following iterations
+respectily
+
+    $ ./start-with-pixie.sh
+
+The latter command uses the rpyton based [pixie](http://pixielang.org)
+for performance  comparison. Two  optional parameters allow  to change
+the complexity of the solution  space. The first determines the number
+of iterations  before pruning takes  place. The second  one determines
+the number  of constellations to  be taken into account  for following
+iterations
 
 ## Licence
 This clojure solitaire solver implementation stands under the terms of the
@@ -59,4 +65,3 @@ And special thanks to Rich Hickey (and the team) for Clojure. Really, thanks!
 
 * Clojure: http://clojure.org
 * Leiningen: https://github.com/technomancy/leiningen
-

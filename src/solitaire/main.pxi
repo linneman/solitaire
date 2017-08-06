@@ -6,18 +6,18 @@
 ; (C) 2011, GNU General Public Licence
 
 (ns solitaire.main
-  (:gen-class)
-  (:require [cider.nrepl :refer (cider-nrepl-handler)]
-            [clojure.tools.nrepl.server :as nrepl-server])
-  (:use [solitaire.core :only (search print-results)] :reload)
-  )
+  (:require [pixie.time :refer [time]]
+            [solitaire.core :refer [search print-results]]))
+
+;(swap! load-paths conj "/Users/ol/Entwicklung/clojure/solitaire/src/")
+;(swap! load-paths conj "./src/")
 
 
 ; command line interface (leiningen)
-(defn -main [& args]
-  (let [iterations-str (or (nth args 0) "3")
+(defn- main [& args]
+  (let [iterations-str (or (first args) "3")
         iterations (read-string iterations-str)
-        pruning-str (or (nth args 1) "10")
+        pruning-str  (or (second args) "10")
         pruning (read-string pruning-str)]
     (do
       ;(nrepl-server/start-server :port 7888 :handler cider-nrepl-handler)
@@ -26,10 +26,11 @@
         invocation:  java -jar solitaire-standalone.jar [iterations-before-pruning] [prune-factor]\n
         (C) 2011, GNU General Public Licence by Otto Linnemann\n\n")
       (println
-        (format "Starting application with %d iterations before pruning to %d constellations..."
-                iterations
-                pruning
-                ))
-      (let [res (time (doall (search iterations pruning)))]
-        (dorun (print-results res))
-        (System/exit 0)))))
+       "Starting application with " iterations
+       " iterations before pruning to " pruning " constellations...")
+      (let [res (time (search iterations pruning))]
+        (println (print-results res))
+        0))))
+
+;(apply main ["2" "3"])
+(apply main program-arguments)
